@@ -85,10 +85,4 @@ def feature_extraction_sparse_test(filename,sparse_encoder,int_encoder):
 	features = sparse_encode_test(int_encoded,sparse_encoder)
 	return features
 
-#extract features by performing dimensionality reduction on the sparse feature vectors
-def feature_extraction_dim_reduction_train(filename,dim):
-	sparse_features,labels,sparse_encoder,int_encoder = feature_extraction_sparse_train(filename)	
-	svd,features = dimensionality_reduction_train(sparse_features,dim)
-	return features,labels,svd,sparse_encoder,int_encoder
-
 	
