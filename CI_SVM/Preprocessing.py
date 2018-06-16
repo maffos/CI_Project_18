@@ -36,7 +36,8 @@ def parse(file_path, labeled):
                 labels.append(line.split()[2])
 
     if labeled:
-        return proteins, labels
+        int_labels = list(map(int, labels))
+        return proteins, int_labels
 
     else:
         return proteins
