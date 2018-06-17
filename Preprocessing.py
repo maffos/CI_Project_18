@@ -3,6 +3,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.decomposition import TruncatedSVD
 from sklearn.model_selection import GridSearchCV
 from scipy import sparse
+import Encodings
 import numpy as np
 
 #returns a 2d list with shape(n_peptides,9_aas)
@@ -59,6 +60,18 @@ def sparse_encode_test(proteins,bin_encoder):
 	bin_encoded = bin_encoder.transform(proteins)
     	return bin_encoded
 
+# encodes amino acids with a 6-character string representing the physicochemical properties
+def encode_physicochemical(proteins):	
+#aa_s doesn't save the peptides as a single string. Every letter is an entry	
+	proteins_encoded = []
+	for protein in proteins:
+		aa_s = []	
+		for aa in protein:
+			aa_s.append(Encodings.aa_to_physicochemical[aa])
+		proteins_encoded.append(np.concatenate(aa_s))
+	print len(proteins_encoded[0])
+	return proteins_encoded
+
 #recover the encoded peptides
 def recover_from_sparse(bin_encoder,int_encoder,proteins_bin_encoded, n_proteins):
 	int_encoded = np.array([bin_encoder.active_features_[col] for col in proteins_bin_encoded.sorted_indices().indices]).reshape(n_proteins,9) - bin_encoder.feature_indices_[:-1]
@@ -84,5 +97,17 @@ def feature_extraction_sparse_test(filename,sparse_encoder,int_encoder):
 	int_encoded = int_encoded.reshape(n,9)
 	features = sparse_encode_test(int_encoded,sparse_encoder)
 	return features
+
+def feature_extraction_physicochemical(filename, labeled):
+	if labeled:	
+		proteins,labels = parse(filename,True)
+	else:
+		proteins = parse(filename, False)
+	proteins_encoded = encode_physicochemical(proteins)
+	if labeled:
+		return proteins_encoded,labels
+	else:
+		return proteins_encoded
+
 
 	
