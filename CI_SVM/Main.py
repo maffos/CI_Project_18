@@ -1,19 +1,20 @@
-import Training as train
-import Model as model
-
-'''
-TODO: Description
-'''
+from Descriptor import Descriptor
+from Encoder import Encoder
+from Parser import Parser
+from Predictor import Predictor
+from Trainer import Trainer
 
 
 if __name__ == "__main__":
 
-    # svm,sparse_encoder,int_encoder = train.train_dimension_reduction("project_training.txt")
-    svm, sparse_encoder, int_encoder = train.train_sparse("project_training.txt")
+    #Usage example
+    enc = Encoder()
+    pars = Parser()
+    trn = Trainer()
+    desc = Descriptor()
+    prd = Predictor()
 
-    print("Best params:")
-    print(svm.best_params_)
-    #print("Scores:")
-    #print(svm.best_score_)
-
-    model.predict("test_input.txt", svm, sparse_encoder, int_encoder)
+    proteins, labels = pars.parse_train('project_training.txt')
+    enc_proteins = enc.bin_encode_proteins(proteins)
+    test = trn.cross_validate(enc_proteins, labels)
+    print(test.mean())
