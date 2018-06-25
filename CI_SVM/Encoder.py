@@ -1,6 +1,8 @@
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
+from Descriptor import Descriptor
 import scipy as sc
+
 
 class Encoder():
 
@@ -10,6 +12,7 @@ class Encoder():
         self.int_encoder = LabelEncoder().fit(self.amino_acids)
         self.oh_encoder = OneHotEncoder().fit(
             self.int_encoder.transform(self.amino_acids).reshape(len(self.amino_acids), 1))
+        self.desc = Descriptor()
 
     def int_encode_protein(self, protein):
         return self.int_encoder.transform(list(protein))
@@ -29,7 +32,8 @@ class Encoder():
         array_representation = csc_representation.toarray().reshape(180)
         csr_representation = sc.sparse.csr_matrix(array_representation)
 
-        return csr_representation
+        return sc.sparse.hstack( (csr_representation, self.desc.annotate_protein( protein )), format='csr')
+        #return csr_representation
 
     def bin_encode_proteins(self, proteins):
 
