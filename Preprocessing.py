@@ -7,22 +7,35 @@ import Encodings
 import numpy as np
 
 #returns a 2d list with shape(n_peptides,9_aas)
-def parse(filename, labeled):
+def parse(filename, txtfile):
 	proteins=[]
-	if labeled:    	
+	if txtfile:    	
 		labels = []
 #read the peptides from the file	
-	with open(filename,"r") as raw_data:
-		if labeled:		
-			raw_data.readline()
-    		for line in raw_data:
-			proteins.append(line.split()[0])
-			if labeled:        		
+	with open(filename,"r") as raw_data:		
+		raw_data.readline()
+		if not txtfile:
+			for line in raw_data:
+				proteins.append(line.split(",")[0])   
+		else:		
+			for line in raw_data:
+				proteins.append(line.split()[0])        		
 				labels.append(line.split()[2])
-	if labeled:	
+	if txtfile:	
 		return proteins,labels
 	else:
 		return proteins
+
+def parse_regression(filename):
+	proteins=[]
+	labels = []
+#read the peptides from the file	
+	with open(filename,"r") as raw_data:		
+		raw_data.readline()
+		for line in raw_data:
+			proteins.append(line.split()[0])        		
+			labels.append(float(line.split()[1]))	
+	return proteins,labels
 
 #receives a 2d list of shape(n_peptides,9_aas) and returns the encoder together with an integer representation of the input
 def int_encode_train(proteins):
@@ -61,7 +74,7 @@ def sparse_encode_test(proteins,bin_encoder):
     	return bin_encoded
 
 # encodes amino acids with a 6-character string representing the physicochemical properties
-def encode_physicochemical(proteins):	
+def encode_physicochemical_train(proteins):	
 #aa_s doesn't save the peptides as a single string. Every letter is an entry	
 	proteins_encoded = []
 	for protein in proteins:
@@ -70,7 +83,20 @@ def encode_physicochemical(proteins):
 			aa_s.append(Encodings.aa_to_physicochemical[aa])
 		proteins_encoded.append(np.concatenate(aa_s))
 	print len(proteins_encoded[0])
+	#onehot_encoder = OneHotEncoder(categorical_features=[5])
+	#proteins_encoded = onehot_encoder.fit_transform(proteins_encoded)
 	return proteins_encoded
+
+def encode_physicochemical_test(proteins,onehot_encoder):	
+#aa_s doesn't save the peptides as a single string. Every letter is an entry	
+	proteins_encoded = []
+	for protein in proteins:
+		aa_s = []	
+		for aa in protein:
+			aa_s.append(Encodings.aa_to_physicochemical[aa])
+		proteins_encoded.append(np.concatenate(aa_s))
+	proteins_encoded = onehot_encoder.transform(proteins_encoded)
+	return proteins_encoded,onehot_encoder
 
 #recover the encoded peptides
 def recover_from_sparse(bin_encoder,int_encoder,proteins_bin_encoded, n_proteins):
@@ -89,6 +115,15 @@ def feature_extraction_sparse_train(filename):
 	sparse_encoder,features = sparse_encode_train(int_encoded)
 	return features,labels,sparse_encoder,int_encoder
 
+#extract sparse features from the raw data and return every encoding and processing model that was used
+def feature_extraction_regression_train(filename):
+	features,labels = parse_regression(filename)
+	n = len(features)
+	int_encoder,int_encoded = int_encode_train(features)
+	int_encoded = int_encoded.reshape(n,9)
+	sparse_encoder,features = sparse_encode_train(int_encoded)
+	return features,labels, sparse_encoder,int_encoder
+
 #extract sparse features from the raw data
 def feature_extraction_sparse_test(filename,sparse_encoder,int_encoder):
 	features = parse(filename,False)
@@ -98,16 +133,39 @@ def feature_extraction_sparse_test(filename,sparse_encoder,int_encoder):
 	features = sparse_encode_test(int_encoded,sparse_encoder)
 	return features
 
-def feature_extraction_physicochemical(filename, labeled):
-	if labeled:	
-		proteins,labels = parse(filename,True)
-	else:
-		proteins = parse(filename, False)
-	proteins_encoded = encode_physicochemical(proteins)
-	if labeled:
-		return proteins_encoded,labels
-	else:
-		return proteins_encoded
+def feature_extraction_physicochemical_train(filename):	
+	proteins,labels = parse(filename,True)
+	proteins_encoded,onehot_encoder = encode_physicochemical_train(proteins)
+	return proteins_encoded,labels,onehot_encoder
+
+def feature_extraction_physicochemical_test(filename, onehot_encoder):
+	proteins = parse(filename, False)
+	proteins_encoded = encode_physicochemical_test(proteins,onehot_encoder)
+	return proteins_encoded
+
+def feature_extraction_categorical_numerical_train( filename ):
+	features, labels = parse( filename, True)
+	n = len(features)
+	int_encoder, int_encoded = int_encode_train(features)
+	int_encoded = int_encoded.reshape(n,9)
+	numerical_encoded = encode_physicochemical_train(features)
+	features = np.concatenate((int_encoded,numerical_encoded),axis=1)
+	onehot_encoder = OneHotEncoder(categorical_features = np.arange(9))
+	features = onehot_encoder.fit_transform(features)
+	return features, labels, onehot_encoder,int_encoder
+
+def feature_extraction_categorical_numerical_test( filename,onehot_encoder,int_encoder ):
+	features = parse( filename, False)
+	n = len(features)
+	int_encoded = int_encode_test(features, int_encoder)
+	int_encoded = int_encoded.reshape(n,9)
+	numerical_encoded = encode_physicochemical_train(features)
+	features = np.concatenate((int_encoded,numerical_encoded),axis=1)
+	features = sparse_encode_test(features, onehot_encoder)
+	return features
+
+if __name__ == "__main__":
+	feature_extraction_categorical_numerical_train("project_training.txt")
 
 
 	
