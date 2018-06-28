@@ -1,8 +1,7 @@
-from pomegranate import *
 from InitMatrices import InitMatrices
 from Data import Data
 from HMMConstruct import HMMConstruct
-#from Validation import kfold_cross_validation
+# from Validation import kfold_cross_validation
 
 
 class HMM():
@@ -29,11 +28,11 @@ class HMM():
         emission_matrix_neg = init_neg.compute_emissions()
 
         self.model_pos = HMMConstruct(trans_matrix_pos, emission_matrix_pos,
-                                 self.pos_path)
+                                      self.pos_path)
         self.model_pos.build_eval_HMM()
 
         self.model_neg = HMMConstruct(trans_matrix_neg, emission_matrix_neg,
-                                 self.neg_path)
+                                      self.neg_path)
         self.model_neg.build_eval_HMM()
 
     def predict(self):
@@ -71,6 +70,7 @@ class HMM():
         text_file.close()
         print('Process successful.')
         return prediction
+
 
 if __name__ == "__main__":
     pos_path = "data_positive.txt"
