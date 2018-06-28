@@ -7,6 +7,7 @@ from HMMConstruct import HMMConstruct
 class HMM():
 
     def __init__(self, pos_path, neg_path, test_path, output_path):
+
         self.pos_path = pos_path
         self.neg_path = neg_path
         self.test_path = test_path
@@ -36,6 +37,7 @@ class HMM():
         self.model_neg.build_eval_HMM()
 
     def predict(self):
+
         text_file = open(self.output_path, "w")
         text_file.write("Id,Prediction1\n")
         prediction = []
@@ -73,6 +75,7 @@ class HMM():
 
 
 if __name__ == "__main__":
+
     pos_path = "data_positive.txt"
     neg_path = "data_negative.txt"
     test_path = "kaggle.txt"
