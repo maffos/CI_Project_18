@@ -60,7 +60,7 @@ class HMM():
 
             # Decides which outcome is more likely and writes it to a file at
             # given path.
-            if (neg_log_likelihood_1 >= neg_log_likelihood_2):
+            if (neg_log_likelihood_1 - neg_log_likelihood_2 >= 0.001):
                 text_file.write(line + ',1\n')
                 prediction.append(1)
                 # print(line + ',1')

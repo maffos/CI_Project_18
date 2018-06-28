@@ -60,7 +60,7 @@ class HMMConstruct():
 
         # Train the HMM model using the Baum-Welch algorithm.
         # Add parameter verbose=True to show training progress.
-        self.hmm.fit(data_training)
+        self.hmm.fit(data_training, max_iterations=23)
 
     # Accepts a list of individual string characters and uses the
     # Viterbi-Algorithm to calculate the negative log likelihood
