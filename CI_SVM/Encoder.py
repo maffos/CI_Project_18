@@ -1,46 +1,54 @@
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import OneHotEncoder
-from Descriptor import Descriptor
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 import scipy as sc
+import DataComp
 
 
-class Encoder():
+class Encoder:
 
-    def __init__(self):
-        self.amino_acids = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W',
-                            'Y', 'V']
-        self.int_encoder = LabelEncoder().fit(self.amino_acids)
-        self.oh_encoder = OneHotEncoder().fit(
-            self.int_encoder.transform(self.amino_acids).reshape(len(self.amino_acids), 1))
-        self.desc = Descriptor()
+    """
+    Comprises methods to sparse encode features.
 
-    def int_encode_protein(self, protein):
-        return self.int_encoder.transform(list(protein))
+    Uses a feature set from DataComp to fit a sparse encoder. Default is amino_acids.
+    """
 
-    def int_encode_proteins(self, proteins):
+    def __init__(self, features=DataComp.amino_acids):
+        # Fits a LabelEncoder to 'features' parameter.
+        self.int_encoder = LabelEncoder().fit(features)
+        # Fits a OneHotEncoder (binary encoding) to the integer representation of 'features' parameter.
+        self.sparse_encoder = OneHotEncoder().fit(self.int_encoder.transform(features).reshape(len(features), 1))
 
-        int_encoded_proteins = []
+    def __int_encode_feature(self, feature):
 
-        for protein in proteins:
-            int_encoded_proteins.append(self.int_encode_protein(protein))
+        """
+        Uses the SciKit LabelEncoder to encode categorical data to integer values.
 
-        return int_encoded_proteins
+        :param feature: Amino acid sequence or a list of physicochemical features.
+        :return: Feature transformed to integer values.
+        """
 
-    def bin_encode_protein(self, protein):
+        return self.int_encoder.transform(feature)
 
-        csc_representation = self.oh_encoder.transform(self.int_encode_protein(protein).reshape(len(protein), 1))
-        array_representation = csc_representation.toarray().reshape(180)
+    def sparse_encode_feature(self, feature):
+
+        """
+        Uses the SciKit OneHotEncoder to encode integer values to binary values in sparse matrix (csr) format.
+
+        :param feature: Amino acid sequence or a list of physicochemical features.
+        :return: Feature transformed to compressed sparse row matrix format.
+        """
+
+        # Transforms feature to compressed sparse column matrix.
+        # All values of a feature a stored in one column of a matrix.
+        csc_representation = self.sparse_encoder.transform(self.__int_encode_feature(feature).reshape(len(feature), 1))
+
+        # Transforms feature to array-representation.
+        # Necessary for correct transforamtion into csr format.
+        array_representation = csc_representation.toarray()
+        dimension = len(array_representation[0])*len(array_representation)
+        array_representation = array_representation.reshape(dimension)
+
+        # Transforms feature to compressed sparse row matrix.
+        # All values of a feature a stored in one row of a matrix.
         csr_representation = sc.sparse.csr_matrix(array_representation)
 
-        return sc.sparse.hstack( (csr_representation, self.desc.annotate_protein( protein )), format='csr')
-        #return csr_representation
-
-    def bin_encode_proteins(self, proteins):
-
-        bin_encoded_proteins = self.bin_encode_protein(proteins[0])
-
-        for protein in proteins[1:]:
-            bin_encoded_proteins = sc.sparse.vstack((bin_encoded_proteins, self.bin_encode_protein(protein)),
-                                                    format='csr')
-
-        return bin_encoded_proteins
+        return csr_representation
